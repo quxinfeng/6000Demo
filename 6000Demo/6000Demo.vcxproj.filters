@@ -54,13 +54,7 @@
     <ClInclude Include="Hih264Decoder.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Drawyuv.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="videoChn.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ddmm.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Page0.h">
@@ -76,6 +70,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="d3ddraw.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LogDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -104,13 +101,7 @@
     <ClCompile Include="Hih264Decoder.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Drawyuv.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="videoChn.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="ddmm.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Page0.cpp">
@@ -126,6 +117,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="d3ddraw.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LogDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

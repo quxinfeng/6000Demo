@@ -22,12 +22,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	Client *m_cClient;
-	int m_iChn;
-	BOOL m_iDisplay;
-	int m_iOSDType;
-	int m_iPosX;
-	int m_iPosY;
-	CString m_cOsdText;
 public:
-	void RefreshChnPara();
+
 };

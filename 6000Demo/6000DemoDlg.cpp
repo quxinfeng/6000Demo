@@ -79,23 +79,24 @@ BEGIN_MESSAGE_MAP(CMy6000DemoDlg, CDialogEx)
 	ON_EN_CHANGE(IDC_PORTEDIT, &CMy6000DemoDlg::OnEnChangePortedit)
 	ON_EN_CHANGE(IDC_IPEDIT, &CMy6000DemoDlg::OnEnChangeIpedit)
 	ON_STN_CLICKED(IDC_VERSIONSTATIC, &CMy6000DemoDlg::OnStnClickedVersionstatic)
-	ON_BN_CLICKED(IDC_VIDEOBUTTON, &CMy6000DemoDlg::OnBnClickedVideobutton)
+	
 	ON_CBN_SELCHANGE(IDC_CHNNUMCOMBO, &CMy6000DemoDlg::OnCbnSelchangeChnnumcombo)
 	ON_CBN_SELCHANGE(IDC_PICCOMBO, &CMy6000DemoDlg::OnCbnSelchangePiccombo)
 
 	ON_CONTROL_RANGE(BN_CLICKED, IDC_VO0, IDC_VO48, OnStnClickedVo)
 	
 	ON_BN_CLICKED(IDC_CONNECT, &CMy6000DemoDlg::OnBnClickedConnect)
-
-	//自定义消息
-	ON_MESSAGE(WM_MY_REFRESHCHNCOM, OnMyRefreshChnCom)
-	ON_MESSAGE(WM_MY_REFRESHVERSION, OnMyRefreshVersion)
-	ON_MESSAGE(WM_MY_REFRESHCHNPARA, OnMyRefreshChnPara)
 	ON_WM_TIMER()
 	ON_CBN_SELCHANGE(IDC_COMBONETMODE, &CMy6000DemoDlg::OnCbnSelchangeCombonetmode)
 	ON_WM_CLOSE()
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB1, &CMy6000DemoDlg::OnTcnSelchangeTab1)
 	ON_BN_CLICKED(IDC_DISCONNECT, &CMy6000DemoDlg::OnBnClickedDisconnect)
+	ON_BN_CLICKED(IDC_LOGBUTTON, &CMy6000DemoDlg::OnBnClickedLogbutton)
+	//自定义消息
+	ON_MESSAGE(WM_MY_REFRESHCHNCOM, OnMyRefreshChnCom)
+	ON_MESSAGE(WM_MY_REFRESHVERSION, OnMyRefreshVersion)
+	ON_MESSAGE(WM_MY_REFRESHCHNPARA, OnMyRefreshChnPara)
+	ON_MESSAGE(WM_MY_REFRESHLOGITEM, OnMyRefreshLogItem)
 END_MESSAGE_MAP()
 
 
@@ -126,7 +127,10 @@ BOOL CMy6000DemoDlg::OnInitDialog()
 		}
 	}
 	HWND Hwnd = AfxGetMainWnd()->m_hWnd;
-	m_cClient.m_cHwnd = Hwnd;
+	
+	m_cClient.m_cMainHwnd = Hwnd;
+	Hwnd = m_tLogDlg.m_hWnd;
+	m_cClient.m_cLogHwnd = Hwnd;
 	// 设置此对话框的图标。  当应用程序主窗口不是对话框时，框架将自动
 	//  执行此操作
 	SetIcon(m_hIcon, TRUE);			// 设置大图标
@@ -190,7 +194,7 @@ BOOL CMy6000DemoDlg::OnInitDialog()
 
 	m_tTab.InsertItem(1, "PREVIEW");
 	m_tTab.InsertItem(2, "SYSTEM");
-	m_tTab.InsertItem(3, "OSD");
+	m_tTab.InsertItem(3, "record");
 
 	m_tpage0.Create(IDD_PAGE0, GetDlgItem(IDC_TAB1));
 	m_tpage1.Create(IDD_PAGE1, GetDlgItem(IDC_TAB1));
@@ -220,7 +224,8 @@ BOOL CMy6000DemoDlg::OnInitDialog()
 	m_tpage1.m_cClient =  &m_cClient;
 	m_tpage2.m_cClient = &m_cClient;
 	m_tpage3.m_cClient = &m_cClient;
-	m_tpage3.m_iChn = m_iChnSelect;
+//	m_tpage3.m_iChn = m_iChnSelect;
+	m_tLogDlg.m_cclient = &m_cClient;
 		//设置默认的选项卡
 	m_tTab.SetCurSel(0);
 	char temp[30];
@@ -253,7 +258,7 @@ BOOL CMy6000DemoDlg::OnInitDialog()
 	Cbx = (CComboBox *)m_tpage1.GetDlgItem(IDC_COMBOVODEV);
 	Cbx->SetCurSel(0);
 
-	Cbx = (CComboBox *)m_tpage3.GetDlgItem(IDC_OSDTYPE);
+	Cbx = (CComboBox *)m_tpage0.GetDlgItem(IDC_OSDTYPE);
 	Cbx->SetCurSel(0);
 
 	DWORD dwErrorCode = 0;
@@ -387,12 +392,17 @@ LRESULT CMy6000DemoDlg::OnMyRefreshChnPara(WPARAM wParam, LPARAM lParam)
 		}
 		else if (m_tTab.GetCurSel() == 3)
 		{
-			m_tpage3.RefreshChnPara();
+//			m_tpage3.RefreshChnPara();
 		}
 	}
 	return 0;
 }
-
+LRESULT CMy6000DemoDlg::OnMyRefreshLogItem(WPARAM wParam, LPARAM lParam)
+{
+	m_tLogDlg.onMyRefreshLogitem(wParam, lParam);
+	
+	return 0;
+}
 
 void CMy6000DemoDlg::OnEnChangePortedit()
 {
@@ -428,27 +438,6 @@ void CMy6000DemoDlg::OnBnClickedButton1()
 }
 
 
-void CMy6000DemoDlg::OnBnClickedVideobutton()
-{
-	TRACE("m_iClient.m_iLogin = %d \n", m_cClient.m_iLoginstat);
-	int i = 0;
-	static int iIndex = 1;
-	int iChnlist[4] = { 0,1,2,3 };
-	int iPicCntList[3] = { 1,2,4 };
-	int iChnRealLIst[4] = { 0 };
-	TRACE("m_iClient.m_iLogin = %d \n", m_cClient.m_iLoginstat);
-	for (i = 0; i < 4; i++)
-	{
-		iChnRealLIst[i] = iChnlist[(iIndex + i) % 4];
-	}
-	iIndex++;
-	TRACE("m_iClient.m_iLogin = %d \n", m_cClient.m_iLoginstat);
-	// TODO: 在此添加控件通知处理程序代码
-	if (m_cClient.m_iLoginstat == 0x8)
-	{
-	//	m_cClient.ClientSetPreviewpara(iPicCntList[iIndex%3], iChnRealLIst);
-	}
-}
 
 
 void CMy6000DemoDlg::OnCbnSelchangeChnnumcombo()
@@ -458,10 +447,10 @@ void CMy6000DemoDlg::OnCbnSelchangeChnnumcombo()
 	CComboBox*	Cbx = (CComboBox *)GetDlgItem(IDC_CHNNUMCOMBO);
 	 m_iChnSelect = Cbx->GetCurSel();
 	 m_tpage0.m_iChn = m_iChnSelect;
-	 m_tpage3.m_iChn = m_iChnSelect;
+//	 m_tpage3.m_iChn = m_iChnSelect;
 
 	 TRACE("m_iChnSelect =%d \n", m_iChnSelect);
-	 ::PostMessage(m_cClient.m_cHwnd, WM_MY_REFRESHCHNPARA, 0, 0);
+	 ::PostMessage(m_cClient.m_cMainHwnd, WM_MY_REFRESHCHNPARA, 0, 0);
 }
 
 
@@ -681,6 +670,7 @@ void CMy6000DemoDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 		{
 		case 0:
 			m_tpage0.ShowWindow(true);
+			m_tpage0.RefreshChnPara();
 			m_tpage1.ShowWindow(false);
 			m_tpage2.ShowWindow(false);
 			m_tpage3.ShowWindow(false);
@@ -688,7 +678,7 @@ void CMy6000DemoDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 		case 1:
 			m_tpage0.ShowWindow(false);
 			m_tpage1.ShowWindow(true);
-			m_tpage1.OnCbnSelchangeCombovodev();
+			m_tpage1.RefreshPara();
 			m_tpage2.ShowWindow(false);
 			m_tpage3.ShowWindow(false);
 			break;
@@ -703,6 +693,7 @@ void CMy6000DemoDlg::OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult)
 			m_tpage1.ShowWindow(false);
 			m_tpage2.ShowWindow(false);
 			m_tpage3.ShowWindow(true);
+//			m_tpage3.RefreshChnPara();
 			break;
 		default:
 			break;
@@ -734,3 +725,10 @@ void CMy6000DemoDlg::OnBnClickedDisconnect()
 
 
 
+
+
+void CMy6000DemoDlg::OnBnClickedLogbutton()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	m_tLogDlg.DoModal();
+}

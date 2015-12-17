@@ -118,6 +118,86 @@ void SetComboboxInt(CComboBox *cbx, int _iint)
 	cbx->SelectString(0, cTmp);
 
 }
+
+
+void SetOsdcolorCbx(CComboBox *cbx, int _iColor)
+{
+	int iIndex = 0;
+	switch (_iColor)
+	{
+	case 0x0:
+		iIndex = 0;
+		break;
+	case 0XFF:
+		iIndex = 1;
+		break;
+	case 0XFF00:
+		iIndex = 2;
+		break;
+	case 0XFF0000:
+		iIndex = 3;
+		break;
+	case 0XFFFF:
+		iIndex = 4;
+		break;
+	case 0XFF00FF:
+		iIndex = 5;
+		break;
+	case 0XFFFF00:
+		iIndex = 6;
+		break;
+	case 0XFFFFFF:
+		iIndex = 7;
+		break;
+	default:
+		iIndex = 8;
+		break;
+	}
+	
+	cbx->SetCurSel(iIndex);
+	
+}
+
+void GetOsdcolorCbx(CComboBox *cbx, int *_iColor)
+{
+
+	int iIndex = cbx->GetCurSel();
+	int iColor = 0;
+	switch (iIndex)
+	{
+	case 0:
+		iColor = 0X0;
+		break;
+	case 1:
+		iColor = 0XFF;
+		break;
+	case 2:
+		iColor = 0XFF00;
+		break;
+	case 3:
+		iColor = 0XFF0000;
+		break;
+	case 4:
+		iColor = 0XFFFF;
+		break;
+	case 5:
+		iColor = 0XFF00FF;
+		break;
+	case 6:
+		iColor = 0XFFFF00;
+		break;
+	case 7:
+		iColor = 0XFFFFFF;
+		break;
+	default:
+		iColor = 0XFFFFFF;
+		break;
+	}
+
+	*_iColor = iColor;
+
+}
+
 int OnCharLeft(const char* c1, const char* c2, char* c3)
 {
 	int i = 0, j = 0;

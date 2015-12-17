@@ -7,6 +7,7 @@
 #include "Page1.h"
 #include "Page2.h"
 #include "Page3.h"
+#include "LogDlg.h"
 #pragma once
 
 #define MAX_VO 49
@@ -15,8 +16,11 @@ class CMy6000DemoDlg : public CDialogEx
 {
 public:
 	Client m_cClient;
-	CPage0 m_cpage0;
-
+	CPage0 m_tpage0;
+	CPage1 m_tpage1;
+	CPage2 m_tpage2;
+	CPage3 m_tpage3;
+	CLogDlg m_tLogDlg;
 // 构造
 public:
 	CMy6000DemoDlg(CWnd* pParent = NULL);	// 标准构造函数
@@ -58,7 +62,7 @@ public:
 	afx_msg void OnEnChangeIpedit();
 	afx_msg void OnStnClickedVersionstatic();
 	afx_msg void OnBnClickedButton1();
-	afx_msg void OnBnClickedVideobutton();
+	
 	afx_msg void OnCbnSelchangeChnnumcombo();
 	
 	
@@ -74,6 +78,7 @@ public:
 
 
 	afx_msg LRESULT OnMyRefreshChnCom(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMyRefreshLogItem(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMyRefreshVersion(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnMyRefreshChnPara(WPARAM wParam, LPARAM lParam);
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
@@ -81,10 +86,8 @@ public:
 	afx_msg void OnClose();
 public:
 	CTabCtrl m_tTab;
-	CPage0 m_tpage0;
-	CPage1 m_tpage1;
-	CPage2 m_tpage2;
-	CPage3 m_tpage3;
+	
 	afx_msg void OnTcnSelchangeTab1(NMHDR *pNMHDR, LRESULT *pResult);
 	afx_msg void OnBnClickedDisconnect();
+	afx_msg void OnBnClickedLogbutton();
 };

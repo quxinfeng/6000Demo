@@ -23,12 +23,19 @@ public:
 	int m_iConstant;
 	int m_iSaturation;
 	int m_iHue;
+
+	BOOL m_iDisplay;
+	int m_iOSDType;
+	int m_iPosX;
+	int m_iPosY;
+	char strText[256];
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV Ö§³Ö
 
 	DECLARE_MESSAGE_MAP()
 public:
 	void RefreshChnPara();
+	void RefreshOsdPara();
 	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
 	afx_msg void OnCbnSelchangeVs();
 	afx_msg void OnCbnSelchangeFramerate();
@@ -36,4 +43,11 @@ public:
 	afx_msg void OnCbnSelchangeBitrate();
 	afx_msg void OnCbnSelchangeRatetype();
 	afx_msg void OnCbnSelchangeVideoqua();
+
+	afx_msg void OnCbnSelchangeOsdtype();
+
+	afx_msg void OnBnClickedButtonapply();
+	afx_msg void OnBnClickedCheckosddisplay();
+	afx_msg void OnBnClickedButtonapplypos();
+	afx_msg void OnCbnSelchangeComboosdcolor();
 };

@@ -31,6 +31,12 @@ void CPage0::DoDataExchange(CDataExchange* pDX)
 	DDX_Slider(pDX, IDC_SLIDERCONSTRAST, m_iConstant);
 	DDX_Slider(pDX, IDC_SLIDERSATURATION, m_iSaturation);
 	DDX_Slider(pDX, IDC_SLIDERHUE, m_iHue);
+	DDX_Check(pDX, IDC_CHECKOSDDISPLAY, m_iDisplay);
+	DDX_CBIndex(pDX, IDC_OSDTYPE, m_iOSDType);
+	DDX_Text(pDX, IDC_EDITPOSX, m_iPosX);
+	DDV_MinMaxInt(pDX, m_iPosX, 0, 1920);
+	DDX_Text(pDX, IDC_EDITPOSY, m_iPosY);
+	DDV_MinMaxInt(pDX, m_iPosY, 0, 1080);
 }
 
 
@@ -42,6 +48,11 @@ BEGIN_MESSAGE_MAP(CPage0, CDialog)
 	ON_CBN_SELCHANGE(IDC_BITRATE, &CPage0::OnCbnSelchangeBitrate)
 	ON_CBN_SELCHANGE(IDC_RATETYPE, &CPage0::OnCbnSelchangeRatetype)
 	ON_CBN_SELCHANGE(IDC_VIDEOQUA, &CPage0::OnCbnSelchangeVideoqua)
+	ON_CBN_SELCHANGE(IDC_OSDTYPE, &CPage0::OnCbnSelchangeOsdtype)
+	ON_BN_CLICKED(IDC_BUTTONAPPLY, &CPage0::OnBnClickedButtonapply)
+	ON_BN_CLICKED(IDC_CHECKOSDDISPLAY, &CPage0::OnBnClickedCheckosddisplay)
+	ON_BN_CLICKED(IDC_BUTTONAPPLYPOS, &CPage0::OnBnClickedButtonapplypos)
+	ON_CBN_SELCHANGE(IDC_COMBOOSDCOLOR, &CPage0::OnCbnSelchangeComboosdcolor)
 END_MESSAGE_MAP()
 
 
@@ -216,6 +227,7 @@ void CPage0::OnCbnSelchangeVideoqua()
 }
 void CPage0::RefreshChnPara()
 {
+	
 	CComboBox *cbx = (CComboBox *)GetDlgItem(IDC_VS);
 	TRACE("m_cClient.m_tVChn[%d].m_iVideoSize = %d \n", m_iChn, m_cClient->m_tVChn[m_iChn].m_tVideopara.m_iVideoSize);
 	SetVideoSizeCombobox(cbx, m_cClient->m_tVChn[m_iChn].m_tVideopara.m_iVideoSize);
@@ -248,26 +260,97 @@ void CPage0::RefreshChnPara()
 	m_iSaturation = m_cClient->m_tVChn[m_iChn].m_tVideopara.m_ViCnf.m_iSaturation;
 	UpdateData(FALSE);
 	CStatic *Cst = (CStatic *)GetDlgItem(IDC_STATICBRIGHTNESS);
-
-
 	sprintf_s(temp, 30, "%d", m_ibrightness);
 	Cst->SetWindowText(temp);
-
-
 	Cst = (CStatic *)GetDlgItem(IDC_STATICSATURATION);
 	sprintf_s(temp, 30, "%d", m_iSaturation);
 	Cst->SetWindowText(temp);
-
-
-
 	Cst = (CStatic *)GetDlgItem(IDC_STATICCONSTRAST);
 	sprintf_s(temp, 30, "%d", m_iConstant);
 	Cst->SetWindowText(temp);
-
-
-
 	Cst = (CStatic *)GetDlgItem(IDC_STATICHUE);
 	sprintf_s(temp, 30, "%d", m_iHue);
 	Cst->SetWindowText(temp);
 
+	
+	RefreshOsdPara();
+}
+
+void CPage0::RefreshOsdPara()
+{
+	UpdateData(TRUE);
+	TRACE("m_iOSDType = %d \n", m_iOSDType);
+	m_iDisplay = m_cClient->m_tVChn[m_iChn].m_TOverLay[m_iOSDType].m_iDispaly;
+	m_iPosX = m_cClient->m_tVChn[m_iChn].m_TOverLay[m_iOSDType].m_iX;
+	m_iPosY = m_cClient->m_tVChn[m_iChn].m_TOverLay[m_iOSDType].m_iY;
+
+	TRACE("color = 0x%x\n", m_cClient->m_tVChn[m_iChn].m_TOverLay[m_iOSDType].m_iColor);
+	CEdit *cEdit = (CEdit *)GetDlgItem(IDC_EDITOSDTEXT);
+	SetDlgItemText(IDC_EDITOSDTEXT, m_cClient->m_tVChn[m_iChn].m_TOverLay[m_iOSDType].m_strWord);
+	CComboBox *cbx = (CComboBox *)GetDlgItem(IDC_COMBOOSDCOLOR);
+	SetOsdcolorCbx(cbx, m_cClient->m_tVChn[m_iChn].m_TOverLay[m_iOSDType].m_iColor);
+	UpdateData(FALSE);
+}
+
+void CPage0::OnCbnSelchangeOsdtype()
+{
+	// TODO: 在此添加控 件通知处理程序代码
+	CEdit *Cedit = (CEdit *)GetDlgItem(IDC_EDITOSDTEXT);
+	CStatic *cText = (CStatic *)GetDlgItem(IDC_STATICTEXT);
+	UpdateData(TRUE);
+	if (m_iOSDType == 1)
+	{
+		Cedit->ShowWindow(FALSE);
+		cText->ShowWindow(FALSE);
+	}
+	else
+	{
+		Cedit->ShowWindow(true);
+		cText->ShowWindow(true);
+	}
+	RefreshOsdPara();
+}
+
+void CPage0::OnBnClickedButtonapply()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CString Text;
+
+	GetDlgItemText(IDC_EDITOSDTEXT, Text);
+
+	if (m_iOSDType == 1)
+	{
+		return;
+	}
+	if (0 == m_iOSDType)
+	{
+		m_cClient->ClientSetOsdChnName(m_iChn, Text.GetBuffer());
+	}
+	else if (2 == m_iOSDType)
+	{
+		m_cClient->ClientSetOsdOverlay(m_iChn, Text.GetBuffer());
+	}
+
+}
+void CPage0::OnBnClickedCheckosddisplay()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	m_cClient->ClientSetOsdDisplay(m_iChn, m_iOSDType, m_iDisplay);
+
+}
+void CPage0::OnBnClickedButtonapplypos()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	UpdateData(true);
+	m_cClient->ClientSetOsdPos(m_iChn, m_iOSDType, m_iPosX, m_iPosY);
+}
+
+void CPage0::OnCbnSelchangeComboosdcolor()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	int iOsdColor = 0;
+	CComboBox *cbx = (CComboBox *)GetDlgItem(IDC_COMBOOSDCOLOR);
+	GetOsdcolorCbx(cbx, &iOsdColor);
+	m_cClient->ClientSetOsdColor(m_iChn, m_iOSDType, iOsdColor);
 }

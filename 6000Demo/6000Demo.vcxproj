@@ -196,12 +196,11 @@
     <ClInclude Include="Client.h" />
     <ClInclude Include="com_fun.h" />
     <ClInclude Include="d3ddraw.h" />
-    <ClInclude Include="ddmm.h" />
-    <ClInclude Include="Drawyuv.h" />
     <ClInclude Include="encrypt.h" />
     <ClInclude Include="Hih264Decoder.h" />
     <ClInclude Include="hi_config.h" />
     <ClInclude Include="hi_h264api.h" />
+    <ClInclude Include="LogDlg.h" />
     <ClInclude Include="Page0.h" />
     <ClInclude Include="Page1.h" />
     <ClInclude Include="Page2.h" />
@@ -218,10 +217,9 @@
     <ClCompile Include="Client.cpp" />
     <ClCompile Include="com_func.cpp" />
     <ClCompile Include="d3ddraw.cpp" />
-    <ClCompile Include="ddmm.cpp" />
-    <ClCompile Include="Drawyuv.cpp" />
     <ClCompile Include="encrypt.cpp" />
     <ClCompile Include="Hih264Decoder.cpp" />
+    <ClCompile Include="LogDlg.cpp" />
     <ClCompile Include="Page0.cpp" />
     <ClCompile Include="Page1.cpp" />
     <ClCompile Include="Page2.cpp" />

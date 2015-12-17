@@ -65,10 +65,14 @@ int videoChn::ChnSendConnect(int _iSub, int _iNetMode, int m_iCmdId, HWND hMainw
 		TRACE("ThreadReceiveVideoData failed dw =%d \n", dw);
 	}
 	//m_tDecoder.initHIH264();
-	m_tDraw.m_hDisplayWnd = hMainwnd;            
+	/*
+	m_tDraw.m_hDisplayWnd = hMainwnd;   
+
 	m_tDraw.ReleaseDirectDraw();
 	m_tDraw.InitDraw(1920, 1088, 24);                        
 	m_tDraw.CreateDirectDraw(hMainwnd, 0);
+	*/
+	m_tD3d.InitD3D(hMainwnd, 1920, 1088);
 	m_tDecoder.DecoderCreate(1920, 1090);
 
 	pThread = AfxBeginThread(ThreadDecode, this, 0, 0, 0);
@@ -891,12 +895,14 @@ UINT ThreadDecode(LPVOID pParam)
 			memcpy(Chn->yuv, pY, height* yStride);                        //真正实现的含义是：把各分量存到相应的数组中
 			memcpy(&Chn->yuv[height* yStride], pU, height*uvStride / 2);
 			memcpy(&Chn->yuv[height* yStride + height* uvStride / 2], pV, height* uvStride / 2);  //依次存入,防止出现绿色
-			Chn->m_tDraw.DirectDrawYUV(Chn->yuv);
+			//Chn->m_tDraw.DirectDrawYUV(Chn->yuv);
+			Chn->m_tD3d.d3dDrawyuv(Chn->yuv);
 			//Sleep(1);
 		}
 				
 		Sleep(1);
 		
 	}
+
 	return 0;
 }

@@ -155,6 +155,8 @@ typedef struct
 
 	int		m_iAudioCoderList[MAX_AUDIOCODER_LIST];
 
+	int     m_iVideosizelistcnt;
+
 	int		m_iVideoList[MAX_VIDEOSIZE_LIST];	// 视频分辨率列表
 }VideoParam;
 
@@ -167,12 +169,42 @@ typedef struct
 	CStatic *m_tVo;
 }TChnvo;
 
+#define MAX_DISK  2
+typedef enum
+{
+	STATE_NONE = 0,								//该通道无磁盘
+	STATE_UNFORMATED,							//该磁盘未格式化
+	STATE_FORMATED,								//该磁盘已格式化
+	STATE_MOUNTED,								//该磁盘已挂载
+	STATE_USING,								//该磁盘当前正在读写
+}TDsikState;
+
+//硬盘用途
+typedef enum
+{
+	RECORD = 0,									//录像
+	BACKUP,										//备份
+	REDUNDANCE,
+	READONLY,
+}TDiskUsage;
+typedef struct  
+{
+	int iDiskNo;
+	long long lDiskSize;
+	long long lDiskIdle;
+	int iPartNum;
+	int iDiskStat;
+	int iDiskUsage;
+}TdiskINfo;
 
 void SetVideoSizeCombobox(CComboBox *cbx, int _iVideoSize);
 void SetVodevsize(CComboBox *cbx, int _iVoSize);
 
 void GetVodevsize(CComboBox *cbx, int *_iVoSize);
 void SetComboboxInt(CComboBox *cbx, int _iint);
+
+void SetOsdcolorCbx(CComboBox *cbx, int _iColor);
+void GetOsdcolorCbx(CComboBox *cbx, int *_iColor);
 int OnCharLeft(const char* c1, const char* c2, char* c3);
 
 
@@ -180,3 +212,12 @@ int OnCharRight(const char* c1, const char* c2, char* c3);
 
 
 int SplitString(unsigned char* _pcSrc, unsigned char* _pcSplit, unsigned char** _ppcDst, int _iFieldLen, int _iFieldNum);
+
+typedef struct  
+{
+	char m_cUserName[32];
+	char m_cContent[256];
+	int iChannel;
+	int iLogType;
+	time_t iTime;
+}LogItem;

@@ -1,7 +1,6 @@
 #pragma once
 #include "Hih264Decoder.h"
 #include "com_fun.h"
-#include "Drawyuv.h"
 #include "d3ddraw.h"
 
 class videoChn
@@ -40,7 +39,6 @@ public:
 	Hih264Decoder	m_tDecoder;
 	unsigned char	*yuv;
 
-	Drawyuv			m_tDraw;
 	TChnvo			m_tVo;
 	
 	d3ddraw			m_tD3d;

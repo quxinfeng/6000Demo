@@ -56,7 +56,7 @@ typedef long long                   sint64;
 #define WM_MY_REFRESHCHNCOM			WM_USER+1
 #define WM_MY_REFRESHVERSION		WM_USER+2
 #define WM_MY_REFRESHCHNPARA		WM_USER+3
-
+#define WM_MY_REFRESHLOGITEM		WM_USER+4
 
 #ifdef _UNICODE
 #if defined _M_IX86

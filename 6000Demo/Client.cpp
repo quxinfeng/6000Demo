@@ -23,7 +23,8 @@ Client::Client()
 	m_iCmdLiveTime = 0;
 	memset(m_cDataBuf, 0, sizeof(m_cDataBuf));
 	memset(m_tVodev, 0, 3*sizeof(TPreviewPara));
-	
+	m_iDiskTotalNum = 0;
+	memset(m_tDiskInfo, 0, MAX_DISK * sizeof(TdiskINfo));
 	
 	m_iConStat = 0;
 	
@@ -36,6 +37,7 @@ Client::Client()
 		m_tVChn[i].m_cServerIp = m_cStrServerIp;
 		
 	}
+	
 }
 
 
@@ -222,23 +224,23 @@ bool Client::ClientRecevecmd(char *_data, int _iBuflength)
 
 	OnCharRight(cMsg, "\t", cMsg);
 	OnCharLeft(cMsg, "\n\n\n", cMsg);
-	char* cInnerCmd[48] = { NULL };
-	char  cTmp[48 * 48] = { 0 };
+	char* cInnerCmd[256] = { NULL };
+	char  cTmp[256 * 256] = { 0 };
 	if (cInnerCmd[0] == NULL)
 	{
-		for (i = 0; i < 48; i++)
+		for (i = 0; i < 256; i++)
 		{
-			cInnerCmd[i] = &cTmp[i * 48];
+			cInnerCmd[i] = &cTmp[i * 256];
 		}
 	}
 	//	int iRet;
-	for (i = 0; i < 32; i++)
+	for (i = 0; i < 256; i++)
 	{
-		memset(cInnerCmd[i], 0, 32);
+		memset(cInnerCmd[i], 0, 256);
 	}
 
 	strcat_s(cMsg, "\t");
-	if (SplitString((unsigned char*)cMsg, (unsigned char*)"\t", (unsigned char**)cInnerCmd, 32, 32) < 0)
+	if (SplitString((unsigned char*)cMsg, (unsigned char*)"\t", (unsigned char**)cInnerCmd, 256, 256) < 0)
 		return false;
 	TRACE("cInnerCmd = %s %s %s \n", cInnerCmd[0], cInnerCmd[1], cInnerCmd[2], cInnerCmd[3]);
 	if (strcmp(cInnerCmd[0], "INNER") == 0)
@@ -268,7 +270,7 @@ bool Client::ClientRecevecmd(char *_data, int _iBuflength)
 		else if (strcmp(cInnerCmd[1], "VERSION") == 0)
 		{
 			strcpy_s(m_strVersion, cInnerCmd[2]);
-			::PostMessage(m_cHwnd, WM_MY_REFRESHVERSION, 0, 0);
+			::PostMessage(m_cMainHwnd, WM_MY_REFRESHVERSION, 0, 0);
 		}
 		else if (strcmp(cInnerCmd[1], "CMDID") == 0)
 		{
@@ -291,7 +293,14 @@ bool Client::ClientRecevecmd(char *_data, int _iBuflength)
 			OnCharRight(cMsg, "\t", cMsg);
 			ClientGetsetPararsp(cMsg, _iBuflength);
 		}
-		else
+		else if(strcmp(cInnerCmd[1], "CMD") == 0)
+		{
+			OnCharRight(cMsg, "\t", cMsg);
+			OnCharRight(cMsg, "\t", cMsg);
+
+			ClientGetCmdRsp(cMsg, _iBuflength);
+		}
+		else 
 		{
 			TRACE("cInnerCmd[1] = %s \n", cInnerCmd[1]);
 			TRACE("INNER unrecgnised \n");
@@ -337,7 +346,7 @@ bool Client::ClientGetpara(char * _data, int _iBuflength)
 	else if (strcmp(cInnerCmd[0], "DEVICEABSTRACT") == 0)
 	{
 		m_iChnnum = atoi(cInnerCmd[1]);
-		::PostMessage(m_cHwnd, WM_MY_REFRESHCHNCOM, 0, 0);
+		::PostMessage(m_cMainHwnd, WM_MY_REFRESHCHNCOM, 0, 0);
 	}
 	else if (strcmp(cInnerCmd[0], "LANPARAM") == 0)
 	{
@@ -434,12 +443,14 @@ bool Client::ClientGetpara(char * _data, int _iBuflength)
 	else if (strcmp(cInnerCmd[0], "OSD_POS") == 0)
 	{
 		int iOsdType = atoi(cInnerCmd[1]);
-		int iX, iY;
+		int iX = 0, iY= 0;
 		for (i = 0; i < m_iChnnum; i++)
 		{
 			sscanf(cInnerCmd[i + 2], "%d:%d", &iX, &iY);
+
 			m_tVChn[i].m_TOverLay[iOsdType].m_iX = iX;
 			m_tVChn[i].m_TOverLay[iOsdType].m_iY = iY;
+			TRACE("iOsdType = %d iX =%d iY =%d \n", iOsdType, iX, iY);
 		}
 	}
 	else if (strcmp(cInnerCmd[0], "OSDTEXT") == 0)
@@ -501,7 +512,7 @@ bool Client::ClientGetpara(char * _data, int _iBuflength)
 			m_tVodev[iIndex].iChnlist[i] = iChnlist[i];
 		}
 	
-		TRACE("PREVIEWREC TODO ADD\n");
+		
 	}
 	else if (strcmp(cInnerCmd[0], "LOCALSTORE") == 0)
 	{
@@ -513,16 +524,37 @@ bool Client::ClientGetpara(char * _data, int _iBuflength)
 	}
 	else if (strcmp(cInnerCmd[0], "DISK") == 0)
 	{
-		TRACE("DISK TODO ADD\n");
+		if (strcmp(cInnerCmd[1], "TOTALNUM") == 0)
+		{
+			m_iDiskTotalNum = atoi(cInnerCmd[2]);
+		}
+		else if (strcmp(cInnerCmd[1], "INFO") == 0)
+		{
+			for (i = 0; i < m_iDiskTotalNum; i++)
+			{
+				m_tDiskInfo[i].iDiskNo = atoi(cInnerCmd[2 + 6*i]);
+				m_tDiskInfo[i].lDiskSize = atoll(cInnerCmd[3 +6 * i]);
+				m_tDiskInfo[i].lDiskIdle = atoll(cInnerCmd[4 + 6 * i]);
+				m_tDiskInfo[i].iPartNum = atoi(cInnerCmd[5 + 6 * i]);
+				m_tDiskInfo[i].iDiskStat = atoi(cInnerCmd[6 + 6 * i]);
+				m_tDiskInfo[i].iDiskUsage = atoi(cInnerCmd[7 + 6 * i]);
+			}
+		}
+		
 	}
 	else if (strcmp(cInnerCmd[0], "VIDEOSIZE_LIST") == 0)
 	{
-		TRACE("VIDEOSIZE_LIST TODO ADD\n");
+		/*
+		int iChn = atoi(cInnerCmd[1]);
+
+		m_tVChn[iChn].m_tVideopara.m_iVideosizelistcnt = atoi(cInnerCmd[2]);
+		for (i = 0; i < atoi(cInnerCmd[2]); i++)
+		{
+			m_tVChn[iChn].m_tVideopara.m_iVideoList[i] = atoi(cInnerCmd[3 + i]);
+		}
+		*/
 	}
-	else if (strcmp(cInnerCmd[0], "VIDEOSIZE_LIST") == 0)
-	{
-		TRACE("VIDEOSIZE_LIST TODO ADD\n");
-	}
+
 	else if (strcmp(cInnerCmd[0], "HEART") == 0)
 	{
 		m_iHeartIntval = atoi(cInnerCmd[1]);
@@ -539,6 +571,10 @@ bool Client::ClientGetpara(char * _data, int _iBuflength)
 	{
 		TRACE("DHCP to add\n");
 	}
+	else if (strcmp(cInnerCmd[0], "CONNECTINFO") == 0)
+	{
+		TRACE("CONNECTINFO to add\n");
+	}
 	else
 	{
 		TRACE("cInnerCmd[0] = %s \n", cInnerCmd[0]);
@@ -549,7 +585,213 @@ bool Client::ClientGetpara(char * _data, int _iBuflength)
 
 bool Client::ClientGetsetPararsp(char * _data, int _iBuflength)
 {
-	ClientGetpara(_data, _iBuflength);
+	int i;
+	int iChn = 0;
+	char cMsg[2048] = { 0 };
+	char* cInnerCmd[48] = { NULL };
+	char  cTmp[48 * 48] = { 0 };
+	if (cInnerCmd[0] == NULL)
+	{
+		for (i = 0; i < 48; i++)
+		{
+			cInnerCmd[i] = &cTmp[i * 48];
+		}
+	}
+	//	int iRet;
+	for (i = 0; i < 32; i++)
+	{
+		memset(cInnerCmd[i], 0, 32);
+	}
+	if (SplitString((unsigned char*)_data, (unsigned char*)"\t", (unsigned char**)cInnerCmd, 32, 32) < 0)
+		return false;
+	
+
+	if (strcmp(cInnerCmd[0], "IFRAMERATE") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		
+		m_tVChn[iChn].m_tVideopara.m_iIFrameRate = atoi(cInnerCmd[2]);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "FRAMERATE") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		
+		m_tVChn[iChn].m_tVideopara.m_iFrameRate = atoi(cInnerCmd[2]);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "BITRATE") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		
+		m_tVChn[iChn].m_tVideopara.m_iBitRate = 8 * atoi(cInnerCmd[2]);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "ENCODETYPE") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		
+		m_tVChn[iChn].m_tVideopara.m_iEncodeType = atoi(cInnerCmd[2]);
+
+		
+	}
+	else if (strcmp(cInnerCmd[0], "VIDEOSIZE") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		
+		m_tVChn[iChn].m_tVideopara.m_iVideoSize = atoi(cInnerCmd[2]);
+	}
+	else if (strcmp(cInnerCmd[0], "VIDEOQUALITY") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+
+		
+		m_tVChn[iChn].m_tVideopara.m_iVideoQuality = atoi(cInnerCmd[2]);
+			
+
+	}
+	else if (strcmp(cInnerCmd[0], "VIDEOPARA") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		
+		m_tVChn[iChn].m_tVideopara.m_ViCnf.m_iLum = atoi(cInnerCmd[2]);
+		m_tVChn[iChn].m_tVideopara.m_ViCnf.m_iSaturation = atoi(cInnerCmd[3]);
+		m_tVChn[iChn].m_tVideopara.m_ViCnf.m_iContrast = atoi(cInnerCmd[4]);
+		m_tVChn[iChn].m_tVideopara.m_ViCnf.m_iHue = atoi(cInnerCmd[5]);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "AUDIOSAMPLE") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		
+		m_tVChn[iChn].m_tVideopara.m_iAudioSample = atoi(cInnerCmd[2]);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "OSD_COLOR") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		int iOsdType = atoi(cInnerCmd[2]);
+		
+			m_tVChn[iChn].m_TOverLay[iOsdType].m_iColor = atoi(cInnerCmd[3]);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "OSD_DISPLAY") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		int iOsdType = atoi(cInnerCmd[2]);
+		
+		m_tVChn[iChn].m_TOverLay[iOsdType].m_iDispaly = atoi(cInnerCmd[3]);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "OSD_POS") == 0)
+	{
+		iChn = atoi(cInnerCmd[1]);
+		int iOsdType = atoi(cInnerCmd[2]);
+		int iX = 0, iY = 0;
+	
+			sscanf(cInnerCmd[3], "%d:%d", &iX, &iY);
+
+			m_tVChn[iChn].m_TOverLay[iOsdType].m_iX = iX;
+			m_tVChn[iChn].m_TOverLay[iOsdType].m_iY = iY;
+			TRACE("iOsdType = %d iX =%d iY =%d \n", iOsdType, iX, iY);
+		
+	}
+	else if (strcmp(cInnerCmd[0], "OSDTEXT") == 0)
+	{
+		int iChn = atoi(cInnerCmd[1]);
+		strcpy(m_tVChn[iChn].m_TOverLay[0].m_strWord, cInnerCmd[2]);
+	}
+	else if (strcmp(cInnerCmd[0], "OSDOVERLAY") == 0)
+	{
+		int iChn = atoi(cInnerCmd[1]);
+		strcpy(m_tVChn[iChn].m_TOverLay[2].m_strWord, cInnerCmd[2]);
+	}
+	
+	else if (strcmp(cInnerCmd[0], "RTMP") == 0)
+	{
+		if (strcmp(cInnerCmd[1], "ENABLE") == 0)
+		{
+			m_blRtmpEnable = atoi(cInnerCmd[2]);
+		}
+		else if (strcmp(cInnerCmd[1], "SERVER") == 0)
+		{
+			strcpy(m_strRtmpserver, cInnerCmd[2]);
+		}
+	}
+	else if (strcmp(cInnerCmd[0], "VODEVSIZE") == 0)
+	{
+		int iVodev = atoi(cInnerCmd[1]);
+		m_iVodevSize[iVodev] = atoi(cInnerCmd[2]);
+	}
+	else if (strcmp(cInnerCmd[0], "NTP") == 0)
+	{
+		TRACE("NTP to ADD\n");
+	}
+	else if (strcmp(cInnerCmd[0], "FTPUPDATE") == 0)
+	{
+		TRACE("FTPUPDATE TODO ADD\n");
+	}
+	else if (strcmp(cInnerCmd[0], "PREVIEWPARA") == 0)
+	{
+		int iIndex = 0;
+		int iVodev = atoi(cInnerCmd[1]);
+		if (iVodev < 2)
+		{
+			iIndex = iVodev;
+		}
+		else
+		{
+			iIndex = 2;
+		}
+		m_tVodev[iIndex].iVodev = iVodev;
+		m_tVodev[iIndex].iPicCnt = atoi(cInnerCmd[2]);
+		int iChnlist[4] = { 0 };
+		sscanf(cInnerCmd[3], "%d:%d:%d:%d", iChnlist, iChnlist + 1, iChnlist + 2, iChnlist + 3);
+		for (i = 0; i < m_tVodev[iIndex].iPicCnt; i++)
+		{
+			m_tVodev[iIndex].iChnlist[i] = iChnlist[i];
+		}
+
+
+	}
+	else if (strcmp(cInnerCmd[0], "LOCALSTORE") == 0)
+	{
+		TRACE("LOCALSTORE TODO ADD\n");
+	}
+	else if (strcmp(cInnerCmd[0], "LOCALSTORE") == 0)
+	{
+		TRACE("LOCALSTORE TODO ADD\n");
+	}
+	
+	else if (strcmp(cInnerCmd[0], "VIDEOSIZE_LIST") == 0)
+	{
+		/*
+		int iChn = atoi(cInnerCmd[1]);
+
+		m_tVChn[iChn].m_tVideopara.m_iVideosizelistcnt = atoi(cInnerCmd[2]);
+		for (i = 0; i < atoi(cInnerCmd[2]); i++)
+		{
+		m_tVChn[iChn].m_tVideopara.m_iVideoList[i] = atoi(cInnerCmd[3 + i]);
+		}
+		*/
+	}
+	else if (strcmp(cInnerCmd[0], "LOGFILE") == 0)
+	{
+		m_iLoglevel = atoi(cInnerCmd[1]);
+		m_iLogSize = atoi(cInnerCmd[2]);
+		TRACE("m_iLoglevel = %d\n", m_iLoglevel);
+	}
+	else if (strcmp(cInnerCmd[0], "DHCP") == 0)
+	{
+		TRACE("DHCP to add\n");
+	}
+
+	else
+	{
+		TRACE("cInnerCmd[0] = %s \n", cInnerCmd[0]);
+		TRACE("PARAGET unrecgnised \n");
+	}
+	
 	return true;
 }
 
@@ -594,6 +836,56 @@ bool Client::ClientGetUserpara(char * _data, int _iBuflength)
 	return false;
 }
 
+bool Client::ClientGetCmdRsp(char *_data, int _iBuflength)
+{
+	int i;
+	TRACE("1_data =%s\n", _data);
+	int iChn = 0;
+	char cMsg[2048] = { 0 };
+	char* cInnerCmd[256] = { NULL };
+	char  cTmp[256 * 256] = { 0 };
+	if (cInnerCmd[0] == NULL)
+	{
+		for (i = 0; i < 256; i++)
+		{
+			cInnerCmd[i] = &cTmp[i * 256];
+		}
+	}
+	TRACE("2_data =%s\n", _data);
+	for (i = 0; i < 256; i++)
+	{
+		memset(cInnerCmd[i], 0, 256);
+	}
+	if (SplitString((unsigned char*)_data, (unsigned char*)"\t", (unsigned char**)cInnerCmd, 256, 256) < 0)
+		return false;
+	TRACE("cInnerCmd[0] =%s\n", cInnerCmd[0]);
+	if (strcmp(cInnerCmd[0], "LOGFILE") == 0)
+	{
+		TRACE("3_data =%s\n", _data);
+		if (strcmp(cInnerCmd[1], "QUERYLOGS") == 0)
+		{
+			m_iLogTatalNum = atoi(cInnerCmd[2]);
+			m_iLogShowNum = atoi(cInnerCmd[3]);
+			m_blLang = atoi(cInnerCmd[4]);
+			for (i = 0; i < m_iLogShowNum; i++)
+			{
+				OnCharLeft(cInnerCmd[5 + i * 4], "@", m_tLogItem[i].m_cUserName);
+				OnCharRight(cInnerCmd[5 + i * 4], "@", m_tLogItem[i].m_cContent);
+			
+				m_tLogItem[i].iChannel = atoi(cInnerCmd[6 + i * 4]);
+				m_tLogItem[i].iLogType = atoi(cInnerCmd[7 + i * 4]);
+				m_tLogItem[i].iTime = atoi(cInnerCmd[8 + 4 * i]);
+			}
+			TRACE("m_iLogTatalNum =%d\n", m_iLogTatalNum);
+			::PostMessage(m_cMainHwnd, WM_MY_REFRESHLOGITEM, 0, 0);
+		}
+	}
+	else
+	{
+		TRACE("cmd NotRecognised\n");
+	}
+	return true;
+}
 bool Client::ClientLoginRsp(char * _data, int _iBuflengt)
 {
 	int i;
@@ -636,8 +928,8 @@ bool Client::ClientLoginRsp(char * _data, int _iBuflengt)
 		_itoa(0, cTmp, 10);
 		strcat_s(cMsg, cTmp);
 		strcat_s(cMsg, "\n\n\n");
-
-		SocketSendbuf(m_icmdSocket, cMsg, strlen(cMsg), 0);
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		
 		return 0;
 	}
 	else if (strcmp(cInnerCmd[0], "SUCCEED") == 0)
@@ -655,7 +947,7 @@ bool Client::ClientLoginRsp(char * _data, int _iBuflengt)
 	{
 		m_iLoginstat = 8;
 		m_blUpdate = true;
-		::PostMessage(m_cHwnd, WM_MY_REFRESHCHNPARA, 0, 0);
+		::PostMessage(m_cMainHwnd, WM_MY_REFRESHCHNPARA, 0, 0);
 	}
 	else
 	{
@@ -673,7 +965,7 @@ int Client::ClientSetPreviewpara(int _iVodev, int iCnt, int *iChn)
 	char cTmp[64];
 	char cTemp[16];
 	char cMsg[2048];
-	sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "PREVIEWPARA", TAB,0,TAB);
+	sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "PREVIEWPARA", TAB, _iVodev,TAB);
 	_itoa(iCnt, cTmp, 10);
 	strcat(cMsg, cTmp);
 	strcat(cMsg, "\t");
@@ -687,8 +979,8 @@ int Client::ClientSetPreviewpara(int _iVodev, int iCnt, int *iChn)
 	}
 	strcat(cMsg, cTmp);
 	strcat(cMsg, END);
+	SendCmdStringtoServer(cMsg, strlen(cMsg));
 	
-	SocketSendbuf(m_icmdSocket, cMsg, strlen(cMsg), 0);
 	return 0;
 }
 
@@ -721,20 +1013,11 @@ int Client::ClientLogoffFromServer()
 		sprintf(cMsg, "%s%s%s%s%s%s%s%s%s%s", m_cStrServerIp, TAB, "IP", TAB, "USER", TAB, "LOGOFF", TAB, m_cUserName, TAB);
 
 		strcat(cMsg, END);
-		SocketSendbuf(m_icmdSocket, cMsg, strlen(cMsg), 0);
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
 		closesocket(m_icmdSocket);
 		m_icmdSocket = 0;
 	}
 	return 1;
-}
-
-
-int SendSocketMsg(char *_cServerIp,SOCKET _iSocket, char *_cMsg, int _iLen)
-{
-	char cMsg[2048];
-	sprintf(cMsg, "%s%s%s%s%s", _cServerIp, TAB, "IP", TAB, _cMsg);
-	SocketSendbuf(_iSocket, cMsg, strlen(cMsg), 0);
-	return 0;
 }
 
 
@@ -748,8 +1031,146 @@ int Client::ClientSetVodevSize(int _iVodev, int _iVodevSize)
 		char cMsg[2048];
 		sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "VODEVSIZE", TAB, _iVodev, TAB, _iVodevSize, END);
 
-	
-		SocketSendbuf(m_icmdSocket, cMsg, strlen(cMsg), 0);
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		
 	}
 	return true;
 }
+
+int Client::ClientSetOsdChnName(int _iChn, char *strtext)
+{
+	if (m_icmdSocket > 0)
+	{
+		int i = 0;
+
+		char cMsg[2048];
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s%s%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "OSDTEXT", TAB, _iChn, TAB, strtext, END);
+
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		
+	}
+	return true;
+}
+
+int Client::ClientSetOsdOverlay(int _iChn, char *strtext)
+{
+	if (m_icmdSocket > 0)
+	{
+		
+
+		char cMsg[2048];
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s%s%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "OSDOVERLAY", TAB, _iChn, TAB, strtext, END);
+
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		
+	}
+	return true;
+}
+int Client::ClientSetOsdDisplay(int _iChn, int _iOsdType, BOOL _blDisplay)
+{
+	if (m_icmdSocket > 0)
+	{
+		int i = 0;
+
+		char cMsg[2048];
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s%d%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "OSD_DISPLAY", TAB, _iChn, TAB, _iOsdType, TAB, _blDisplay,END);
+
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		
+	}
+	return true;
+}
+
+int Client::ClientSetOsdColor(int _iChn, int _iOsdType, int _iColor)
+{
+	if (m_icmdSocket > 0)
+	{
+		int i = 0;
+
+		char cMsg[2048];
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s%d%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "OSD_COLOR", TAB, _iChn, TAB, _iOsdType,
+			TAB,_iColor,END);
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+
+		
+	}
+	return true;
+}
+int Client::ClientSetOsdPos(int _iChn, int _iOsdType, int _iX, int _iy)
+{
+	if (m_icmdSocket > 0)
+	{
+		
+		char cParaTmp[32] = { 0 };
+		char cMsg[2048];
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "PARASET", TAB, "OSD_POS", TAB, _iChn, TAB, _iOsdType, TAB);
+
+		sprintf(cParaTmp, "%d:%d", _iX, _iy);
+		strcat(cMsg, cParaTmp);
+		strcat(cMsg, END);
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+	}
+	return true;
+}
+
+int Client::SendCmdStringtoServer(char *_cMsg, int _iBuflength)
+{
+	if (m_icmdSocket > 0)
+	{
+		SocketSendbuf(m_icmdSocket, _cMsg, _iBuflength, 0);
+		return true;
+	}
+
+	return false;
+}
+
+int Client::ClientSearchLog(long _iStartTm, long _iEndTm, int _ilogType, int _iLang, int _iPagesize, int _iPageNo, int _iChannel)
+{
+	if (m_icmdSocket > 0)
+	{
+	
+		char cParaTmp[32] = { 0 };
+		char cMsg[2048] = {0};
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%s%s%d%s%d%s%d%s%d%s%d%s%d%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "CMD", TAB, "LOGFILE", TAB, "QUERYLOGS", TAB, _iChannel, TAB, _ilogType, TAB, _iLang,TAB,_iStartTm,TAB,_iEndTm,TAB,_iPagesize,TAB,_iPageNo,END);
+
+		
+		
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		return true;
+	}
+	return false;
+}
+
+int Client::ClientLogClear()
+{
+	if (m_icmdSocket > 0)
+	{
+
+		char cParaTmp[32] = { 0 };
+		char cMsg[2048] = { 0 };
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%s%s", m_cStrServerIp, TAB, "IP", TAB, "CMD", TAB, "LOGFILE", TAB, "CLEAR",  END);
+
+
+	
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		return true;
+	}
+	return false;
+}
+
+int Client::ClietnSetFocus(int _iVodev, int _iAudioChn)
+{
+	if (m_icmdSocket > 0)
+	{
+		char cParaTmp[32] = { 0 };
+		char cMsg[2048] = { 0 };
+		sprintf(cMsg, "%s%s%s%s%s%s%s%s%d%s%d%s", m_cStrServerIp, TAB, "IP", TAB, "CMD", TAB, "SETFOCUS", TAB, _iVodev,TAB,_iAudioChn, END);
+
+		SendCmdStringtoServer(cMsg, strlen(cMsg));
+		return true;
+	}
+	return 0;
+}
+
+
+

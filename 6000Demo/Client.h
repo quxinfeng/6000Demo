@@ -60,6 +60,9 @@ public:
 	videoChn m_tVChn[MAX_CHN];
 
 	TPreviewPara m_tVodev[MAX_VODEV];
+
+	int m_iDiskTotalNum;
+	TdiskINfo m_tDiskInfo[MAX_DISK];
 public:
 	Client();
 
@@ -88,29 +91,49 @@ public:
 	char m_cDns[16];
 	char m_cBackDns[16];
 	
-	HWND m_cHwnd;
-
+	HWND m_cMainHwnd;
+	HWND m_cLogHwnd;
 	
-
+	int m_iLogTatalNum;
+	int m_iLogShowNum;
+	int m_blLang;
+	LogItem m_tLogItem[10];
 public:
 	
 	bool GetClientInitFlg();
 	bool GetClientUpdateFlg();
 	bool SetClientUpdateFlg(bool _blUpdateFlg);
 
+
 	bool ClientRecevecmd(char *_data, int _iBuflength);
 	bool ClientGetpara(char *_data, int _iBuflength);
 	bool ClientGetsetPararsp(char *_data, int _iBuflength);
+	bool ClientGetCmdRsp(char *_data, int _iBuflength);
 	bool ClientGetUserpara(char *_data, int _iBuflength);
 	bool ClientLoginRsp(char *_data, int _iBuflengt);
 	void ClientParseData(char *_data, int _iBuflength);
+
+
 	int ClientLogonServer(char *_StrServerIp, int _iServerPort, char *_StrUserName, char *_StrPassWord);
 	int ClientLogoffFromServer();
 	
+	int SendCmdStringtoServer(char *_cMsg, int _iBuflength);
+
+
 	int ClientSetPreviewpara(int _iVodev,int iCnt, int *iChn);
 	int ClientSetVodevSize(int _iVodev, int _iVodevSize);
 	int ClientConnectChn(int _iChn, int _iSub, int _iNetMode,HWND _hWnd);
 
 
+	int ClientSetOsdChnName(int _iChn, char *strtext);
+	int ClientSetOsdOverlay(int _iChn, char *strtext);
+	int ClientSetOsdDisplay(int _iChn, int _iOsdType, BOOL _blDisplay);
+	int ClientSetOsdColor(int _iChn, int _iOsdType, int _iColor);
+	int ClientSetOsdPos(int _iChn, int _iOsdType, int _iX, int _iy);
+
+	int ClientSearchLog(long _iStartTm, long _iEndTm, int _ilogType,int _iLang, int _iPagesize, int _iPageNo, int _iChannel);
+	int ClientLogClear();
+
+	int ClietnSetFocus(int _iVodev,int _iAudioChn);
 };
 

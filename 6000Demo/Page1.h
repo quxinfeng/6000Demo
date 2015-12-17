@@ -22,9 +22,12 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	Client *m_cClient;
+	void RefreshPara();
 	afx_msg void OnCbnSelchangeCombopic1();
 	afx_msg void OnBnClickedBtnpreset();
 	afx_msg void OnCbnSelchangeCombovodev();
 	afx_msg void OnCbnSelchangeCombovosize();
 	afx_msg void OnCbnSelchangeCombopreviewnum();
+	afx_msg void OnCbnSelchangeComboaudio();
+	afx_msg void OnCbnSelchangeCombodisk();
 };
